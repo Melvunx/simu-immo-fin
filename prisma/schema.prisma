@@ -1,0 +1,313 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model financing_loans {
+  id                      String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  financing_scenario_id   String              @db.Uuid
+  loan_order              Int                 @default(1)
+  label                   String?
+  principal_amount        Decimal             @db.Decimal(12, 2)
+  outstanding_capital     Decimal?            @db.Decimal(12, 2)
+  nominal_rate            Decimal?            @default(0) @db.Decimal(8, 5)
+  insurance_monthly       Decimal?            @default(0) @db.Decimal(12, 2)
+  deferred_type           String?             @default("none")
+  deferred_months         Int?                @default(0)
+  amortization_months     Int?
+  total_duration_months   Int?
+  monthly_payment_phase_1 Decimal?            @db.Decimal(12, 2)
+  monthly_payment_phase_2 Decimal?            @db.Decimal(12, 2)
+  monthly_payment_phase_3 Decimal?            @db.Decimal(12, 2)
+  phase_1_months          Int?                @default(0)
+  phase_2_months          Int?                @default(0)
+  phase_3_months          Int?                @default(0)
+  loan_type               String?             @default("classic")
+  created_at              DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime            @default(now()) @db.Timestamptz(6)
+  financing_scenarios     financing_scenarios @relation(fields: [financing_scenario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([financing_scenario_id], map: "idx_financing_loans_scenario_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model financing_scenarios {
+  id                       String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id               String                  @db.Uuid
+  label                    String
+  is_default               Boolean?                @default(false)
+  financing_mode           String                  @default("single_loan")
+  down_payment             Decimal?                @default(0) @db.Decimal(12, 2)
+  loan_amount              Decimal?                @default(0) @db.Decimal(12, 2)
+  nominal_rate             Decimal?                @default(0) @db.Decimal(8, 5)
+  insurance_monthly        Decimal?                @default(0) @db.Decimal(12, 2)
+  duration_months          Int?
+  deferred_months          Int?                    @default(0)
+  bank_fees                Decimal?                @default(0) @db.Decimal(12, 2)
+  guarantee_fees           Decimal?                @default(0) @db.Decimal(12, 2)
+  broker_fees              Decimal?                @default(0) @db.Decimal(12, 2)
+  monthly_payment          Decimal?                @db.Decimal(12, 2)
+  annual_debt_service      Decimal?                @db.Decimal(12, 2)
+  total_credit_cost        Decimal?                @db.Decimal(12, 2)
+  weighted_average_rate    Decimal?                @db.Decimal(8, 5)
+  smoothed_monthly_payment Decimal?                @db.Decimal(12, 2)
+  notes                    String?
+  created_at               DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime                @default(now()) @db.Timestamptz(6)
+  financing_loans          financing_loans[]
+  projects                 projects                @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  negotiation_scenarios    negotiation_scenarios[]
+  operating_scenarios      operating_scenarios[]
+
+  @@index([project_id], map: "idx_financing_scenarios_project_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model market_comparables {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id      String    @db.Uuid
+  comparable_type String
+  source          String
+  source_url      String?
+  address         String?
+  city            String?
+  zipcode         String?
+  district        String?
+  property_type   String?
+  rooms           Decimal?  @db.Decimal(4, 1)
+  area_m2         Decimal?  @db.Decimal(10, 2)
+  floor           String?
+  condition       String?
+  dpe             String?
+  price           Decimal?  @db.Decimal(12, 2)
+  rent_monthly    Decimal?  @db.Decimal(12, 2)
+  charges_monthly Decimal?  @db.Decimal(12, 2)
+  euro_per_m2     Decimal?  @db.Decimal(12, 2)
+  comparable_date DateTime? @db.Date
+  notes           String?
+  distance_km     Decimal?  @db.Decimal(10, 2)
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+  projects        projects  @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([project_id], map: "idx_market_comparables_project_id")
+  @@index([comparable_type], map: "idx_market_comparables_type")
+}
+
+model market_summaries {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id           String   @unique @db.Uuid
+  dvf_median_eur_m2    Decimal? @db.Decimal(12, 2)
+  dvf_mean_eur_m2      Decimal? @db.Decimal(12, 2)
+  dvf_p25_eur_m2       Decimal? @db.Decimal(12, 2)
+  dvf_p75_eur_m2       Decimal? @db.Decimal(12, 2)
+  dvf_sample_size      Int?
+  dvf_target_price     Decimal? @db.Decimal(12, 2)
+  market_rent_median   Decimal? @db.Decimal(12, 2)
+  market_rent_low      Decimal? @db.Decimal(12, 2)
+  market_rent_high     Decimal? @db.Decimal(12, 2)
+  market_rent_eur_m2   Decimal? @db.Decimal(12, 2)
+  rental_tension_label String?
+  rental_tension_score Decimal? @db.Decimal(8, 4)
+  price_gap_vs_market  Decimal? @db.Decimal(8, 4)
+  rent_gap_vs_market   Decimal? @db.Decimal(8, 4)
+  summary              String?
+  created_at           DateTime @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime @default(now()) @db.Timestamptz(6)
+  projects             projects @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([project_id], map: "idx_market_summaries_project_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model negotiation_scenarios {
+  id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id            String               @db.Uuid
+  financing_scenario_id String?              @db.Uuid
+  operating_scenario_id String?              @db.Uuid
+  label                 String
+  price_amount          Decimal              @db.Decimal(12, 2)
+  delta_percent         Decimal?             @db.Decimal(8, 4)
+  monthly_payment       Decimal?             @db.Decimal(12, 2)
+  cashflow_monthly      Decimal?             @db.Decimal(12, 2)
+  nnn_yield             Decimal?             @db.Decimal(8, 4)
+  dscr                  Decimal?             @db.Decimal(8, 4)
+  verdict               String?
+  created_at            DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime             @default(now()) @db.Timestamptz(6)
+  financing_scenarios   financing_scenarios? @relation(fields: [financing_scenario_id], references: [id], onUpdate: NoAction)
+  operating_scenarios   operating_scenarios? @relation(fields: [operating_scenario_id], references: [id], onUpdate: NoAction)
+  projects              projects             @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([project_id], map: "idx_negotiation_scenarios_project_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model operating_scenarios {
+  id                               String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id                       String                  @db.Uuid
+  financing_scenario_id            String?                 @db.Uuid
+  label                            String
+  mode                             String
+  is_default                       Boolean?                @default(false)
+  monthly_rent                     Decimal?                @default(0) @db.Decimal(12, 2)
+  rent_cc_monthly                  Decimal?                @default(0) @db.Decimal(12, 2)
+  vacancy_rate                     Decimal?                @default(0) @db.Decimal(5, 4)
+  annual_nights                    Int?
+  nightly_rate                     Decimal?                @db.Decimal(12, 2)
+  occupancy_rate                   Decimal?                @db.Decimal(5, 4)
+  platform_fee_rate                Decimal?                @default(0) @db.Decimal(5, 4)
+  cleaning_cost_annual             Decimal?                @default(0) @db.Decimal(12, 2)
+  other_revenue_annual             Decimal?                @default(0) @db.Decimal(12, 2)
+  tax_regime                       String?
+  marginal_tax_rate                Decimal?                @db.Decimal(5, 4)
+  social_tax_rate                  Decimal?                @db.Decimal(5, 4)
+  cfe_annual_override              Decimal?                @db.Decimal(12, 2)
+  accountant_annual_override       Decimal?                @db.Decimal(12, 2)
+  management_fees_annual_override  Decimal?                @db.Decimal(12, 2)
+  maintenance_annual_override      Decimal?                @db.Decimal(12, 2)
+  building_value_for_amortization  Decimal?                @db.Decimal(12, 2)
+  furniture_value_for_amortization Decimal?                @db.Decimal(12, 2)
+  annual_building_amortization     Decimal?                @db.Decimal(12, 2)
+  annual_furniture_amortization    Decimal?                @db.Decimal(12, 2)
+  annual_total_amortization        Decimal?                @db.Decimal(12, 2)
+  annual_revenue                   Decimal?                @db.Decimal(12, 2)
+  annual_owner_charges             Decimal?                @db.Decimal(12, 2)
+  annual_debt_service              Decimal?                @db.Decimal(12, 2)
+  noi_annual                       Decimal?                @db.Decimal(12, 2)
+  taxable_result_annual            Decimal?                @db.Decimal(12, 2)
+  tax_annual                       Decimal?                @db.Decimal(12, 2)
+  cashflow_annual                  Decimal?                @db.Decimal(12, 2)
+  cashflow_monthly                 Decimal?                @db.Decimal(12, 2)
+  gross_yield                      Decimal?                @db.Decimal(8, 4)
+  net_yield                        Decimal?                @db.Decimal(8, 4)
+  nnn_yield                        Decimal?                @db.Decimal(8, 4)
+  dscr                             Decimal?                @db.Decimal(8, 4)
+  roe                              Decimal?                @db.Decimal(8, 4)
+  irr_10y                          Decimal?                @db.Decimal(8, 4)
+  npv_10y                          Decimal?                @db.Decimal(12, 2)
+  break_even_rent_monthly          Decimal?                @db.Decimal(12, 2)
+  break_even_price                 Decimal?                @db.Decimal(12, 2)
+  verdict                          String?
+  verdict_reason                   String?
+  created_at                       DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at                       DateTime                @default(now()) @db.Timestamptz(6)
+  negotiation_scenarios            negotiation_scenarios[]
+  financing_scenarios              financing_scenarios?    @relation(fields: [financing_scenario_id], references: [id], onUpdate: NoAction)
+  projects                         projects                @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([financing_scenario_id], map: "idx_operating_scenarios_financing_id")
+  @@index([project_id], map: "idx_operating_scenarios_project_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model pdf_exports {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id   String   @db.Uuid
+  export_type  String
+  file_path    String?
+  file_name    String?
+  generated_at DateTime @default(now()) @db.Timestamptz(6)
+  projects     projects @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([project_id], map: "idx_pdf_exports_project_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model projects {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id               String?
+  title                 String
+  source_url            String?
+  status                String?                 @default("draft")
+  city                  String?
+  zipcode               String?
+  district              String?
+  notes                 String?
+  created_at            DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime                @default(now()) @db.Timestamptz(6)
+  financing_scenarios   financing_scenarios[]
+  market_comparables    market_comparables[]
+  market_summaries      market_summaries?
+  negotiation_scenarios negotiation_scenarios[]
+  operating_scenarios   operating_scenarios[]
+  pdf_exports           pdf_exports[]
+  properties            properties?
+
+  @@index([city, zipcode], map: "idx_projects_city_zipcode")
+  @@index([user_id], map: "idx_projects_user_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model properties {
+  id                           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id                   String   @unique @db.Uuid
+  property_type                String?
+  title                        String?
+  address_line_1               String?
+  address_line_2               String?
+  city                         String?
+  zipcode                      String?
+  district                     String?
+  rooms                        Decimal? @db.Decimal(4, 1)
+  bedrooms                     Int?
+  bathrooms                    Int?
+  area_m2                      Decimal? @db.Decimal(10, 2)
+  floor                        String?
+  total_floors                 Int?
+  has_elevator                 Boolean? @default(false)
+  has_parking                  Boolean? @default(false)
+  parking_count                Int?     @default(0)
+  has_balcony                  Boolean? @default(false)
+  balcony_area_m2              Decimal? @db.Decimal(10, 2)
+  has_terrace                  Boolean? @default(false)
+  terrace_area_m2              Decimal? @db.Decimal(10, 2)
+  has_garden                   Boolean? @default(false)
+  garden_area_m2               Decimal? @db.Decimal(10, 2)
+  has_cave                     Boolean? @default(false)
+  has_cellar                   Boolean? @default(false)
+  condition                    String?
+  year_built                   Int?
+  delivery_year                Int?
+  is_vefa                      Boolean? @default(false)
+  dpe                          String?
+  ges                          String?
+  energy_score                 Decimal? @db.Decimal(10, 2)
+  climate_score                Decimal? @db.Decimal(10, 2)
+  distance_station_minutes     Int?
+  station_name                 String?
+  tension_score                Decimal? @db.Decimal(4, 2)
+  listed_price                 Decimal? @db.Decimal(12, 2)
+  agency_fees                  Decimal? @default(0) @db.Decimal(12, 2)
+  fees_included                Boolean? @default(true)
+  net_seller_price             Decimal? @db.Decimal(12, 2)
+  notary_fees                  Decimal? @default(0) @db.Decimal(12, 2)
+  furnishing_cost              Decimal? @default(0) @db.Decimal(12, 2)
+  renovation_cost              Decimal? @default(0) @db.Decimal(12, 2)
+  guarantee_fees               Decimal? @default(0) @db.Decimal(12, 2)
+  bank_fees                    Decimal? @default(0) @db.Decimal(12, 2)
+  broker_fees                  Decimal? @default(0) @db.Decimal(12, 2)
+  other_acquisition_costs      Decimal? @default(0) @db.Decimal(12, 2)
+  property_tax_annual          Decimal? @default(0) @db.Decimal(12, 2)
+  condo_charges_monthly        Decimal? @default(0) @db.Decimal(12, 2)
+  recoverable_charges_ratio    Decimal? @default(0) @db.Decimal(5, 4)
+  pno_annual                   Decimal? @default(0) @db.Decimal(12, 2)
+  gli_annual                   Decimal? @default(0) @db.Decimal(12, 2)
+  maintenance_annual           Decimal? @default(0) @db.Decimal(12, 2)
+  management_fees_annual       Decimal? @default(0) @db.Decimal(12, 2)
+  cfe_annual                   Decimal? @default(0) @db.Decimal(12, 2)
+  accountant_annual            Decimal? @default(0) @db.Decimal(12, 2)
+  other_operating_costs_annual Decimal? @default(0) @db.Decimal(12, 2)
+  total_project_cost           Decimal? @db.Decimal(12, 2)
+  price_per_m2                 Decimal? @db.Decimal(12, 2)
+  created_at                   DateTime @default(now()) @db.Timestamptz(6)
+  updated_at                   DateTime @default(now()) @db.Timestamptz(6)
+  projects                     projects @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([city, zipcode], map: "idx_properties_city_zipcode")
+  @@index([project_id], map: "idx_properties_project_id")
+}
