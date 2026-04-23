@@ -8,306 +8,304 @@ datasource db {
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model financing_loans {
-  id                      String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  financing_scenario_id   String              @db.Uuid
-  loan_order              Int                 @default(1)
-  label                   String?
-  principal_amount        Decimal             @db.Decimal(12, 2)
-  outstanding_capital     Decimal?            @db.Decimal(12, 2)
-  nominal_rate            Decimal?            @default(0) @db.Decimal(8, 5)
-  insurance_monthly       Decimal?            @default(0) @db.Decimal(12, 2)
-  deferred_type           String?             @default("none")
-  deferred_months         Int?                @default(0)
-  amortization_months     Int?
-  total_duration_months   Int?
-  monthly_payment_phase_1 Decimal?            @db.Decimal(12, 2)
-  monthly_payment_phase_2 Decimal?            @db.Decimal(12, 2)
-  monthly_payment_phase_3 Decimal?            @db.Decimal(12, 2)
-  phase_1_months          Int?                @default(0)
-  phase_2_months          Int?                @default(0)
-  phase_3_months          Int?                @default(0)
-  loan_type               String?             @default("classic")
-  created_at              DateTime            @default(now()) @db.Timestamptz(6)
-  updated_at              DateTime            @default(now()) @db.Timestamptz(6)
-  financing_scenarios     financing_scenarios @relation(fields: [financing_scenario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model Project {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String?  @map("user_id")
+  title     String
+  sourceUrl String?  @map("source_url")
+  status    String?  @default("draft")
+  city      String?
+  zipcode   String?
+  district  String?
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  @@index([financing_scenario_id], map: "idx_financing_loans_scenario_id")
+  property             Property?
+  financingScenarios   FinancingScenario[]
+  operatingScenarios   OperatingScenario[]
+  marketSummary        MarketSummary?
+  marketComparables    MarketComparable[]
+  negotiationScenarios NegotiationScenario[]
+  pdfExports           PdfExport[]
+
+  @@map("projects")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model financing_scenarios {
-  id                       String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  project_id               String                  @db.Uuid
-  label                    String
-  is_default               Boolean?                @default(false)
-  financing_mode           String                  @default("single_loan")
-  down_payment             Decimal?                @default(0) @db.Decimal(12, 2)
-  loan_amount              Decimal?                @default(0) @db.Decimal(12, 2)
-  nominal_rate             Decimal?                @default(0) @db.Decimal(8, 5)
-  insurance_monthly        Decimal?                @default(0) @db.Decimal(12, 2)
-  duration_months          Int?
-  deferred_months          Int?                    @default(0)
-  bank_fees                Decimal?                @default(0) @db.Decimal(12, 2)
-  guarantee_fees           Decimal?                @default(0) @db.Decimal(12, 2)
-  broker_fees              Decimal?                @default(0) @db.Decimal(12, 2)
-  monthly_payment          Decimal?                @db.Decimal(12, 2)
-  annual_debt_service      Decimal?                @db.Decimal(12, 2)
-  total_credit_cost        Decimal?                @db.Decimal(12, 2)
-  weighted_average_rate    Decimal?                @db.Decimal(8, 5)
-  smoothed_monthly_payment Decimal?                @db.Decimal(12, 2)
-  notes                    String?
-  created_at               DateTime                @default(now()) @db.Timestamptz(6)
-  updated_at               DateTime                @default(now()) @db.Timestamptz(6)
-  financing_loans          financing_loans[]
-  projects                 projects                @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  negotiation_scenarios    negotiation_scenarios[]
-  operating_scenarios      operating_scenarios[]
+model Property {
+  id                        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId                 String   @unique @map("project_id") @db.Uuid
+  propertyType              String?  @map("property_type")
+  title                     String?
+  addressLine1              String?  @map("address_line_1")
+  addressLine2              String?  @map("address_line_2")
+  city                      String?
+  zipcode                   String?
+  district                  String?
+  rooms                     Decimal? @db.Decimal(4, 1)
+  bedrooms                  Int?
+  bathrooms                 Int?
+  areaM2                    Decimal? @map("area_m2") @db.Decimal(10, 2)
+  floor                     String?
+  totalFloors               Int?     @map("total_floors")
+  hasElevator               Boolean  @default(false) @map("has_elevator")
+  hasParking                Boolean  @default(false) @map("has_parking")
+  parkingCount              Int      @default(0) @map("parking_count")
+  hasBalcony                Boolean  @default(false) @map("has_balcony")
+  balconyAreaM2             Decimal? @map("balcony_area_m2") @db.Decimal(10, 2)
+  hasTerrace                Boolean  @default(false) @map("has_terrace")
+  terraceAreaM2             Decimal? @map("terrace_area_m2") @db.Decimal(10, 2)
+  hasGarden                 Boolean  @default(false) @map("has_garden")
+  gardenAreaM2              Decimal? @map("garden_area_m2") @db.Decimal(10, 2)
+  hasCave                   Boolean  @default(false) @map("has_cave")
+  hasCellar                 Boolean  @default(false) @map("has_cellar")
+  condition                 String?
+  yearBuilt                 Int?     @map("year_built")
+  deliveryYear              Int?     @map("delivery_year")
+  isVefa                    Boolean  @default(false) @map("is_vefa")
+  dpe                       String?
+  ges                       String?
+  energyScore               Decimal? @map("energy_score") @db.Decimal(10, 2)
+  climateScore              Decimal? @map("climate_score") @db.Decimal(10, 2)
+  distanceStationMinutes    Int?     @map("distance_station_minutes")
+  stationName               String?  @map("station_name")
+  tensionScore              Decimal? @map("tension_score") @db.Decimal(4, 2)
+  listedPrice               Decimal? @map("listed_price") @db.Decimal(12, 2)
+  agencyFees                Decimal? @default(0) @map("agency_fees") @db.Decimal(12, 2)
+  feesIncluded              Boolean  @default(true) @map("fees_included")
+  netSellerPrice            Decimal? @map("net_seller_price") @db.Decimal(12, 2)
+  notaryFees                Decimal? @default(0) @map("notary_fees") @db.Decimal(12, 2)
+  furnishingCost            Decimal? @default(0) @map("furnishing_cost") @db.Decimal(12, 2)
+  renovationCost            Decimal? @default(0) @map("renovation_cost") @db.Decimal(12, 2)
+  guaranteeFees             Decimal? @default(0) @map("guarantee_fees") @db.Decimal(12, 2)
+  bankFees                  Decimal? @default(0) @map("bank_fees") @db.Decimal(12, 2)
+  brokerFees                Decimal? @default(0) @map("broker_fees") @db.Decimal(12, 2)
+  otherAcquisitionCosts     Decimal? @default(0) @map("other_acquisition_costs") @db.Decimal(12, 2)
+  propertyTaxAnnual         Decimal? @default(0) @map("property_tax_annual") @db.Decimal(12, 2)
+  condoChargesMonthly       Decimal? @default(0) @map("condo_charges_monthly") @db.Decimal(12, 2)
+  recoverableChargesRatio   Decimal? @default(0) @map("recoverable_charges_ratio") @db.Decimal(5, 4)
+  pnoAnnual                 Decimal? @default(0) @map("pno_annual") @db.Decimal(12, 2)
+  gliAnnual                 Decimal? @default(0) @map("gli_annual") @db.Decimal(12, 2)
+  maintenanceAnnual         Decimal? @default(0) @map("maintenance_annual") @db.Decimal(12, 2)
+  managementFeesAnnual      Decimal? @default(0) @map("management_fees_annual") @db.Decimal(12, 2)
+  cfeAnnual                 Decimal? @default(0) @map("cfe_annual") @db.Decimal(12, 2)
+  accountantAnnual          Decimal? @default(0) @map("accountant_annual") @db.Decimal(12, 2)
+  otherOperatingCostsAnnual Decimal? @default(0) @map("other_operating_costs_annual") @db.Decimal(12, 2)
+  totalProjectCost          Decimal? @map("total_project_cost") @db.Decimal(12, 2)
+  pricePerM2                Decimal? @map("price_per_m2") @db.Decimal(12, 2)
+  createdAt                 DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  @@index([project_id], map: "idx_financing_scenarios_project_id")
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("properties")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model market_comparables {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  project_id      String    @db.Uuid
-  comparable_type String
-  source          String
-  source_url      String?
-  address         String?
-  city            String?
-  zipcode         String?
-  district        String?
-  property_type   String?
-  rooms           Decimal?  @db.Decimal(4, 1)
-  area_m2         Decimal?  @db.Decimal(10, 2)
-  floor           String?
-  condition       String?
-  dpe             String?
-  price           Decimal?  @db.Decimal(12, 2)
-  rent_monthly    Decimal?  @db.Decimal(12, 2)
-  charges_monthly Decimal?  @db.Decimal(12, 2)
-  euro_per_m2     Decimal?  @db.Decimal(12, 2)
-  comparable_date DateTime? @db.Date
-  notes           String?
-  distance_km     Decimal?  @db.Decimal(10, 2)
-  created_at      DateTime  @default(now()) @db.Timestamptz(6)
-  projects        projects  @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model FinancingScenario {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId              String   @map("project_id") @db.Uuid
+  label                  String
+  isDefault              Boolean  @default(false) @map("is_default")
+  financingMode          String   @default("single_loan") @map("financing_mode")
+  downPayment            Decimal? @default(0) @map("down_payment") @db.Decimal(12, 2)
+  loanAmount             Decimal? @default(0) @map("loan_amount") @db.Decimal(12, 2)
+  nominalRate            Decimal? @default(0) @map("nominal_rate") @db.Decimal(8, 5)
+  insuranceMonthly       Decimal? @default(0) @map("insurance_monthly") @db.Decimal(12, 2)
+  durationMonths         Int?     @map("duration_months")
+  deferredMonths         Int?     @default(0) @map("deferred_months")
+  bankFees               Decimal? @default(0) @map("bank_fees") @db.Decimal(12, 2)
+  guaranteeFees          Decimal? @default(0) @map("guarantee_fees") @db.Decimal(12, 2)
+  brokerFees             Decimal? @default(0) @map("broker_fees") @db.Decimal(12, 2)
+  monthlyPayment         Decimal? @map("monthly_payment") @db.Decimal(12, 2)
+  annualDebtService      Decimal? @map("annual_debt_service") @db.Decimal(12, 2)
+  totalCreditCost        Decimal? @map("total_credit_cost") @db.Decimal(12, 2)
+  weightedAverageRate    Decimal? @map("weighted_average_rate") @db.Decimal(8, 5)
+  smoothedMonthlyPayment Decimal? @map("smoothed_monthly_payment") @db.Decimal(12, 2)
+  notes                  String?
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  @@index([project_id], map: "idx_market_comparables_project_id")
-  @@index([comparable_type], map: "idx_market_comparables_type")
+  project              Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  loans                FinancingLoan[]
+  operatingScenarios   OperatingScenario[]
+  negotiationScenarios NegotiationScenario[]
+
+  @@map("financing_scenarios")
 }
 
-model market_summaries {
+model FinancingLoan {
   id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  project_id           String   @unique @db.Uuid
-  dvf_median_eur_m2    Decimal? @db.Decimal(12, 2)
-  dvf_mean_eur_m2      Decimal? @db.Decimal(12, 2)
-  dvf_p25_eur_m2       Decimal? @db.Decimal(12, 2)
-  dvf_p75_eur_m2       Decimal? @db.Decimal(12, 2)
-  dvf_sample_size      Int?
-  dvf_target_price     Decimal? @db.Decimal(12, 2)
-  market_rent_median   Decimal? @db.Decimal(12, 2)
-  market_rent_low      Decimal? @db.Decimal(12, 2)
-  market_rent_high     Decimal? @db.Decimal(12, 2)
-  market_rent_eur_m2   Decimal? @db.Decimal(12, 2)
-  rental_tension_label String?
-  rental_tension_score Decimal? @db.Decimal(8, 4)
-  price_gap_vs_market  Decimal? @db.Decimal(8, 4)
-  rent_gap_vs_market   Decimal? @db.Decimal(8, 4)
-  summary              String?
-  created_at           DateTime @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime @default(now()) @db.Timestamptz(6)
-  projects             projects @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  financingScenarioId  String   @map("financing_scenario_id") @db.Uuid
+  loanOrder            Int      @default(1) @map("loan_order")
+  label                String?
+  principalAmount      Decimal  @map("principal_amount") @db.Decimal(12, 2)
+  outstandingCapital   Decimal? @map("outstanding_capital") @db.Decimal(12, 2)
+  nominalRate          Decimal? @default(0) @map("nominal_rate") @db.Decimal(8, 5)
+  insuranceMonthly     Decimal? @default(0) @map("insurance_monthly") @db.Decimal(12, 2)
+  deferredType         String?  @default("none") @map("deferred_type")
+  deferredMonths       Int?     @default(0) @map("deferred_months")
+  amortizationMonths   Int?     @map("amortization_months")
+  totalDurationMonths  Int?     @map("total_duration_months")
+  monthlyPaymentPhase1 Decimal? @map("monthly_payment_phase_1") @db.Decimal(12, 2)
+  monthlyPaymentPhase2 Decimal? @map("monthly_payment_phase_2") @db.Decimal(12, 2)
+  monthlyPaymentPhase3 Decimal? @map("monthly_payment_phase_3") @db.Decimal(12, 2)
+  phase1Months         Int?     @default(0) @map("phase_1_months")
+  phase2Months         Int?     @default(0) @map("phase_2_months")
+  phase3Months         Int?     @default(0) @map("phase_3_months")
+  loanType             String?  @default("classic") @map("loan_type")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  @@index([project_id], map: "idx_market_summaries_project_id")
+  financingScenario FinancingScenario @relation(fields: [financingScenarioId], references: [id], onDelete: Cascade)
+
+  @@map("financing_loans")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model negotiation_scenarios {
-  id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  project_id            String               @db.Uuid
-  financing_scenario_id String?              @db.Uuid
-  operating_scenario_id String?              @db.Uuid
-  label                 String
-  price_amount          Decimal              @db.Decimal(12, 2)
-  delta_percent         Decimal?             @db.Decimal(8, 4)
-  monthly_payment       Decimal?             @db.Decimal(12, 2)
-  cashflow_monthly      Decimal?             @db.Decimal(12, 2)
-  nnn_yield             Decimal?             @db.Decimal(8, 4)
-  dscr                  Decimal?             @db.Decimal(8, 4)
-  verdict               String?
-  created_at            DateTime             @default(now()) @db.Timestamptz(6)
-  updated_at            DateTime             @default(now()) @db.Timestamptz(6)
-  financing_scenarios   financing_scenarios? @relation(fields: [financing_scenario_id], references: [id], onUpdate: NoAction)
-  operating_scenarios   operating_scenarios? @relation(fields: [operating_scenario_id], references: [id], onUpdate: NoAction)
-  projects              projects             @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model OperatingScenario {
+  id                            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId                     String   @map("project_id") @db.Uuid
+  financingScenarioId           String?  @map("financing_scenario_id") @db.Uuid
+  label                         String
+  mode                          String
+  isDefault                     Boolean  @default(false) @map("is_default")
+  monthlyRent                   Decimal? @default(0) @map("monthly_rent") @db.Decimal(12, 2)
+  rentCcMonthly                 Decimal? @default(0) @map("rent_cc_monthly") @db.Decimal(12, 2)
+  vacancyRate                   Decimal? @default(0) @map("vacancy_rate") @db.Decimal(5, 4)
+  annualNights                  Int?     @map("annual_nights")
+  nightlyRate                   Decimal? @map("nightly_rate") @db.Decimal(12, 2)
+  occupancyRate                 Decimal? @map("occupancy_rate") @db.Decimal(5, 4)
+  platformFeeRate               Decimal? @default(0) @map("platform_fee_rate") @db.Decimal(5, 4)
+  cleaningCostAnnual            Decimal? @default(0) @map("cleaning_cost_annual") @db.Decimal(12, 2)
+  otherRevenueAnnual            Decimal? @default(0) @map("other_revenue_annual") @db.Decimal(12, 2)
+  taxRegime                     String?  @map("tax_regime")
+  marginalTaxRate               Decimal? @map("marginal_tax_rate") @db.Decimal(5, 4)
+  socialTaxRate                 Decimal? @map("social_tax_rate") @db.Decimal(5, 4)
+  cfeAnnualOverride             Decimal? @map("cfe_annual_override") @db.Decimal(12, 2)
+  accountantAnnualOverride      Decimal? @map("accountant_annual_override") @db.Decimal(12, 2)
+  managementFeesAnnualOverride  Decimal? @map("management_fees_annual_override") @db.Decimal(12, 2)
+  maintenanceAnnualOverride     Decimal? @map("maintenance_annual_override") @db.Decimal(12, 2)
+  buildingValueForAmortization  Decimal? @map("building_value_for_amortization") @db.Decimal(12, 2)
+  furnitureValueForAmortization Decimal? @map("furniture_value_for_amortization") @db.Decimal(12, 2)
+  annualBuildingAmortization    Decimal? @map("annual_building_amortization") @db.Decimal(12, 2)
+  annualFurnitureAmortization   Decimal? @map("annual_furniture_amortization") @db.Decimal(12, 2)
+  annualTotalAmortization       Decimal? @map("annual_total_amortization") @db.Decimal(12, 2)
+  annualRevenue                 Decimal? @map("annual_revenue") @db.Decimal(12, 2)
+  annualOwnerCharges            Decimal? @map("annual_owner_charges") @db.Decimal(12, 2)
+  annualDebtService             Decimal? @map("annual_debt_service") @db.Decimal(12, 2)
+  noiAnnual                     Decimal? @map("noi_annual") @db.Decimal(12, 2)
+  taxableResultAnnual           Decimal? @map("taxable_result_annual") @db.Decimal(12, 2)
+  taxAnnual                     Decimal? @map("tax_annual") @db.Decimal(12, 2)
+  cashflowAnnual                Decimal? @map("cashflow_annual") @db.Decimal(12, 2)
+  cashflowMonthly               Decimal? @map("cashflow_monthly") @db.Decimal(12, 2)
+  grossYield                    Decimal? @map("gross_yield") @db.Decimal(8, 4)
+  netYield                      Decimal? @map("net_yield") @db.Decimal(8, 4)
+  nnnYield                      Decimal? @map("nnn_yield") @db.Decimal(8, 4)
+  dscr                          Decimal? @db.Decimal(8, 4)
+  roe                           Decimal? @db.Decimal(8, 4)
+  irr10y                        Decimal? @map("irr_10y") @db.Decimal(8, 4)
+  npv10y                        Decimal? @map("npv_10y") @db.Decimal(12, 2)
+  breakEvenRentMonthly          Decimal? @map("break_even_rent_monthly") @db.Decimal(12, 2)
+  breakEvenPrice                Decimal? @map("break_even_price") @db.Decimal(12, 2)
+  verdict                       String?
+  verdictReason                 String?  @map("verdict_reason")
+  createdAt                     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                     DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  @@index([project_id], map: "idx_negotiation_scenarios_project_id")
+  project              Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  financingScenario    FinancingScenario?    @relation(fields: [financingScenarioId], references: [id], onDelete: SetNull)
+  negotiationScenarios NegotiationScenario[]
+
+  @@map("operating_scenarios")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model operating_scenarios {
-  id                               String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  project_id                       String                  @db.Uuid
-  financing_scenario_id            String?                 @db.Uuid
-  label                            String
-  mode                             String
-  is_default                       Boolean?                @default(false)
-  monthly_rent                     Decimal?                @default(0) @db.Decimal(12, 2)
-  rent_cc_monthly                  Decimal?                @default(0) @db.Decimal(12, 2)
-  vacancy_rate                     Decimal?                @default(0) @db.Decimal(5, 4)
-  annual_nights                    Int?
-  nightly_rate                     Decimal?                @db.Decimal(12, 2)
-  occupancy_rate                   Decimal?                @db.Decimal(5, 4)
-  platform_fee_rate                Decimal?                @default(0) @db.Decimal(5, 4)
-  cleaning_cost_annual             Decimal?                @default(0) @db.Decimal(12, 2)
-  other_revenue_annual             Decimal?                @default(0) @db.Decimal(12, 2)
-  tax_regime                       String?
-  marginal_tax_rate                Decimal?                @db.Decimal(5, 4)
-  social_tax_rate                  Decimal?                @db.Decimal(5, 4)
-  cfe_annual_override              Decimal?                @db.Decimal(12, 2)
-  accountant_annual_override       Decimal?                @db.Decimal(12, 2)
-  management_fees_annual_override  Decimal?                @db.Decimal(12, 2)
-  maintenance_annual_override      Decimal?                @db.Decimal(12, 2)
-  building_value_for_amortization  Decimal?                @db.Decimal(12, 2)
-  furniture_value_for_amortization Decimal?                @db.Decimal(12, 2)
-  annual_building_amortization     Decimal?                @db.Decimal(12, 2)
-  annual_furniture_amortization    Decimal?                @db.Decimal(12, 2)
-  annual_total_amortization        Decimal?                @db.Decimal(12, 2)
-  annual_revenue                   Decimal?                @db.Decimal(12, 2)
-  annual_owner_charges             Decimal?                @db.Decimal(12, 2)
-  annual_debt_service              Decimal?                @db.Decimal(12, 2)
-  noi_annual                       Decimal?                @db.Decimal(12, 2)
-  taxable_result_annual            Decimal?                @db.Decimal(12, 2)
-  tax_annual                       Decimal?                @db.Decimal(12, 2)
-  cashflow_annual                  Decimal?                @db.Decimal(12, 2)
-  cashflow_monthly                 Decimal?                @db.Decimal(12, 2)
-  gross_yield                      Decimal?                @db.Decimal(8, 4)
-  net_yield                        Decimal?                @db.Decimal(8, 4)
-  nnn_yield                        Decimal?                @db.Decimal(8, 4)
-  dscr                             Decimal?                @db.Decimal(8, 4)
-  roe                              Decimal?                @db.Decimal(8, 4)
-  irr_10y                          Decimal?                @db.Decimal(8, 4)
-  npv_10y                          Decimal?                @db.Decimal(12, 2)
-  break_even_rent_monthly          Decimal?                @db.Decimal(12, 2)
-  break_even_price                 Decimal?                @db.Decimal(12, 2)
-  verdict                          String?
-  verdict_reason                   String?
-  created_at                       DateTime                @default(now()) @db.Timestamptz(6)
-  updated_at                       DateTime                @default(now()) @db.Timestamptz(6)
-  negotiation_scenarios            negotiation_scenarios[]
-  financing_scenarios              financing_scenarios?    @relation(fields: [financing_scenario_id], references: [id], onUpdate: NoAction)
-  projects                         projects                @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model MarketSummary {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId          String   @unique @map("project_id") @db.Uuid
+  dvfMedianEurM2     Decimal? @map("dvf_median_eur_m2") @db.Decimal(12, 2)
+  dvfMeanEurM2       Decimal? @map("dvf_mean_eur_m2") @db.Decimal(12, 2)
+  dvfP25EurM2        Decimal? @map("dvf_p25_eur_m2") @db.Decimal(12, 2)
+  dvfP75EurM2        Decimal? @map("dvf_p75_eur_m2") @db.Decimal(12, 2)
+  dvfSampleSize      Int?     @map("dvf_sample_size")
+  dvfTargetPrice     Decimal? @map("dvf_target_price") @db.Decimal(12, 2)
+  marketRentMedian   Decimal? @map("market_rent_median") @db.Decimal(12, 2)
+  marketRentLow      Decimal? @map("market_rent_low") @db.Decimal(12, 2)
+  marketRentHigh     Decimal? @map("market_rent_high") @db.Decimal(12, 2)
+  marketRentEurM2    Decimal? @map("market_rent_eur_m2") @db.Decimal(12, 2)
+  rentalTensionLabel String?  @map("rental_tension_label")
+  rentalTensionScore Decimal? @map("rental_tension_score") @db.Decimal(8, 4)
+  priceGapVsMarket   Decimal? @map("price_gap_vs_market") @db.Decimal(8, 4)
+  rentGapVsMarket    Decimal? @map("rent_gap_vs_market") @db.Decimal(8, 4)
+  summary            String?
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  @@index([financing_scenario_id], map: "idx_operating_scenarios_financing_id")
-  @@index([project_id], map: "idx_operating_scenarios_project_id")
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("market_summaries")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model pdf_exports {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  project_id   String   @db.Uuid
-  export_type  String
-  file_path    String?
-  file_name    String?
-  generated_at DateTime @default(now()) @db.Timestamptz(6)
-  projects     projects @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model MarketComparable {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId      String    @map("project_id") @db.Uuid
+  comparableType String    @map("comparable_type")
+  source         String
+  sourceUrl      String?   @map("source_url")
+  address        String?
+  city           String?
+  zipcode        String?
+  district       String?
+  propertyType   String?   @map("property_type")
+  rooms          Decimal?  @db.Decimal(4, 1)
+  areaM2         Decimal?  @map("area_m2") @db.Decimal(10, 2)
+  floor          String?
+  condition      String?
+  dpe            String?
+  price          Decimal?  @db.Decimal(12, 2)
+  rentMonthly    Decimal?  @map("rent_monthly") @db.Decimal(12, 2)
+  chargesMonthly Decimal?  @map("charges_monthly") @db.Decimal(12, 2)
+  euroPerM2      Decimal?  @map("euro_per_m2") @db.Decimal(12, 2)
+  comparableDate DateTime? @map("comparable_date") @db.Date
+  notes          String?
+  distanceKm     Decimal?  @map("distance_km") @db.Decimal(10, 2)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@index([project_id], map: "idx_pdf_exports_project_id")
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("market_comparables")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model projects {
-  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id               String?
-  title                 String
-  source_url            String?
-  status                String?                 @default("draft")
-  city                  String?
-  zipcode               String?
-  district              String?
-  notes                 String?
-  created_at            DateTime                @default(now()) @db.Timestamptz(6)
-  updated_at            DateTime                @default(now()) @db.Timestamptz(6)
-  financing_scenarios   financing_scenarios[]
-  market_comparables    market_comparables[]
-  market_summaries      market_summaries?
-  negotiation_scenarios negotiation_scenarios[]
-  operating_scenarios   operating_scenarios[]
-  pdf_exports           pdf_exports[]
-  properties            properties?
+model NegotiationScenario {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId           String   @map("project_id") @db.Uuid
+  financingScenarioId String?  @map("financing_scenario_id") @db.Uuid
+  operatingScenarioId String?  @map("operating_scenario_id") @db.Uuid
+  label               String
+  priceAmount         Decimal  @map("price_amount") @db.Decimal(12, 2)
+  deltaPercent        Decimal? @map("delta_percent") @db.Decimal(8, 4)
+  monthlyPayment      Decimal? @map("monthly_payment") @db.Decimal(12, 2)
+  cashflowMonthly     Decimal? @map("cashflow_monthly") @db.Decimal(12, 2)
+  nnnYield            Decimal? @map("nnn_yield") @db.Decimal(8, 4)
+  dscr                Decimal? @db.Decimal(8, 4)
+  verdict             String?
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  @@index([city, zipcode], map: "idx_projects_city_zipcode")
-  @@index([user_id], map: "idx_projects_user_id")
+  project           Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  financingScenario FinancingScenario? @relation(fields: [financingScenarioId], references: [id], onDelete: SetNull)
+  operatingScenario OperatingScenario? @relation(fields: [operatingScenarioId], references: [id], onDelete: SetNull)
+
+  @@map("negotiation_scenarios")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model properties {
-  id                           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  project_id                   String   @unique @db.Uuid
-  property_type                String?
-  title                        String?
-  address_line_1               String?
-  address_line_2               String?
-  city                         String?
-  zipcode                      String?
-  district                     String?
-  rooms                        Decimal? @db.Decimal(4, 1)
-  bedrooms                     Int?
-  bathrooms                    Int?
-  area_m2                      Decimal? @db.Decimal(10, 2)
-  floor                        String?
-  total_floors                 Int?
-  has_elevator                 Boolean? @default(false)
-  has_parking                  Boolean? @default(false)
-  parking_count                Int?     @default(0)
-  has_balcony                  Boolean? @default(false)
-  balcony_area_m2              Decimal? @db.Decimal(10, 2)
-  has_terrace                  Boolean? @default(false)
-  terrace_area_m2              Decimal? @db.Decimal(10, 2)
-  has_garden                   Boolean? @default(false)
-  garden_area_m2               Decimal? @db.Decimal(10, 2)
-  has_cave                     Boolean? @default(false)
-  has_cellar                   Boolean? @default(false)
-  condition                    String?
-  year_built                   Int?
-  delivery_year                Int?
-  is_vefa                      Boolean? @default(false)
-  dpe                          String?
-  ges                          String?
-  energy_score                 Decimal? @db.Decimal(10, 2)
-  climate_score                Decimal? @db.Decimal(10, 2)
-  distance_station_minutes     Int?
-  station_name                 String?
-  tension_score                Decimal? @db.Decimal(4, 2)
-  listed_price                 Decimal? @db.Decimal(12, 2)
-  agency_fees                  Decimal? @default(0) @db.Decimal(12, 2)
-  fees_included                Boolean? @default(true)
-  net_seller_price             Decimal? @db.Decimal(12, 2)
-  notary_fees                  Decimal? @default(0) @db.Decimal(12, 2)
-  furnishing_cost              Decimal? @default(0) @db.Decimal(12, 2)
-  renovation_cost              Decimal? @default(0) @db.Decimal(12, 2)
-  guarantee_fees               Decimal? @default(0) @db.Decimal(12, 2)
-  bank_fees                    Decimal? @default(0) @db.Decimal(12, 2)
-  broker_fees                  Decimal? @default(0) @db.Decimal(12, 2)
-  other_acquisition_costs      Decimal? @default(0) @db.Decimal(12, 2)
-  property_tax_annual          Decimal? @default(0) @db.Decimal(12, 2)
-  condo_charges_monthly        Decimal? @default(0) @db.Decimal(12, 2)
-  recoverable_charges_ratio    Decimal? @default(0) @db.Decimal(5, 4)
-  pno_annual                   Decimal? @default(0) @db.Decimal(12, 2)
-  gli_annual                   Decimal? @default(0) @db.Decimal(12, 2)
-  maintenance_annual           Decimal? @default(0) @db.Decimal(12, 2)
-  management_fees_annual       Decimal? @default(0) @db.Decimal(12, 2)
-  cfe_annual                   Decimal? @default(0) @db.Decimal(12, 2)
-  accountant_annual            Decimal? @default(0) @db.Decimal(12, 2)
-  other_operating_costs_annual Decimal? @default(0) @db.Decimal(12, 2)
-  total_project_cost           Decimal? @db.Decimal(12, 2)
-  price_per_m2                 Decimal? @db.Decimal(12, 2)
-  created_at                   DateTime @default(now()) @db.Timestamptz(6)
-  updated_at                   DateTime @default(now()) @db.Timestamptz(6)
-  projects                     projects @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model PdfExport {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId   String   @map("project_id") @db.Uuid
+  exportType  String   @map("export_type")
+  filePath    String?  @map("file_path")
+  fileName    String?  @map("file_name")
+  generatedAt DateTime @default(now()) @map("generated_at") @db.Timestamptz(6)
 
-  @@index([city, zipcode], map: "idx_properties_city_zipcode")
-  @@index([project_id], map: "idx_properties_project_id")
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("pdf_exports")
 }
